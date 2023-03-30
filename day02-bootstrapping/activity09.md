@@ -1,22 +1,16 @@
----
-title: "Activity 9 - Bootstrapping"
-output: github_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+Activity 9 - Bootstrapping
+================
 
 ## Task 2: Load the necessary packages
 
-```{r,message=FALSE,warning=FALSE}
+``` r
 library(tidyverse)
 library(tidymodels)
 ```
 
 ## Task 3: Create the data
 
-```{r}
+``` r
 # Create a data frame/tibble named sim_dat
 sim_dat <- tibble(
   # Generate 20 random numbers from a uniform distribution between -5 and 5 and store them in x1
@@ -47,10 +41,10 @@ sim_dat <- sim_dat %>%
       TRUE ~ "Yes"
     )
   )
-
 ```
 
-2) Based on the above code the baseline model is "y = 2 + 0.25*x1 + (-0.5)*x2 + 1*x3 + errors"
+2.  Based on the above code the baseline model is "y = 2 + 0.25*x1 +
+    (-0.5)*x2 + 1\*x3 + errors"
 
 $$
 Y= 2+ 0.25X1 - 0.5X2 + X3 + Errors
