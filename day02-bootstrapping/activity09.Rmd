@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r,message=FALSE,warning=FALSE}
 library(tidyverse)
 library(tidymodels)
+library(GGally)
 ```
 
 ## Task 3: Create the data
@@ -50,8 +51,84 @@ sim_dat <- sim_dat %>%
 
 ```
 
-2) Based on the above code the baseline model is "y = 2 + 0.25*x1 + (-0.5)*x2 + 1*x3 + errors"
+2) Based on the above code the baseline model is 
 
 $$
 Y= 2+ 0.25X1 - 0.5X2 + X3 + Errors
 $$
+
+```{r}
+ggpairs(sim_dat)
+```
+
+
+3) 
+  * X1 and Y are not so correlated and the relationship does not look linear with a correlation-coefficient of "0.023"
+  
+  * X2 and Y seems to be very highly negatively correlated with a strong linear relationship with a correlation-coefficient of "-0.997"
+  
+  * X3 being a categorical value with only two values "yes" and "no". The mean value for "Yes" is higher than "no" which    suggests there is a positive relation between X3 and Y. But, since the mean values are not so different, X3 is not          highly correlated with Y.
+  
+  
+## Task 4: Traditional MLR model
+
+```{r}
+mlr_fit <- linear_reg() %>%
+  set_mode("regression") %>% 
+  set_engine("lm") %>% 
+  fit(y ~ x1 + x2 + x3, data = sim_dat)
+
+# Also include the confidence intervals for our estimated slope parameters
+tidy(mlr_fit, conf.int = TRUE)
+```
+
+4) The results are close enough and accurate to population model. I have compared the coefficients of X1, X2 and the intercept from the results to the ones in population model.
+
+
+## Task 5: Bootstrapping
+
+```{r}
+# Set a random seed value so we can obtain the same "random" results
+set.seed(631)
+
+# Generate the 2000 bootstrap samples
+boot_samps <- sim_dat %>% 
+  bootstraps(times = 2000)
+
+boot_samps
+```
+
+  
+```{r}
+# Create a function that fits a fixed MLR model to one split dataset
+fit_mlr_boots <- function(split) {
+  lm(y ~ x1 + x2 + x3, data = analysis(split))
+}
+
+# Fit the model to each split and store the information
+# Also, obtain the tidy model information
+boot_models <- boot_samps %>% 
+  mutate(
+    model = map(splits, fit_mlr_boots),
+    coef_info = map(model, tidy)
+    )
+
+boots_coefs <- boot_models %>% 
+  unnest(coef_info)
+
+boots_coefs
+```
+
+```{r}
+boot_int <- int_pctl(boot_models, statistics = coef_info, alpha = 0.05)
+boot_int
+```
+
+```{r}
+ggplot(boots_coefs, aes(x = estimate)) +
+  geom_histogram(bins = 30) +
+  facet_wrap( ~ term, scales = "free") +
+  geom_vline(data = boot_int, aes(xintercept = .lower), col = "blue") +
+  geom_vline(data = boot_int, aes(xintercept = .upper), col = "blue")
+```
+
